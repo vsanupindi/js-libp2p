@@ -9,6 +9,8 @@ const CID = require('cids')
 const KadDHT = require('libp2p-kad-dht')
 const uint8ArrayFromString = require('uint8arrays/from-string')
 const uint8ArrayToString = require('uint8arrays/to-string')
+const fs = require('fs')
+const os = require('os')
 
 const all = require('it-all')
 const delay = require('delay')
@@ -78,6 +80,18 @@ const createNode = async () => {
     const return_val = await (node3.contentRouting.get(key, { timeout: 3000 }))
     console.log('The returned value is: ', return_val)
     console.log('The returned value is: ', uint8ArrayToString(return_val))
+
+    const directory = 'stocks-Test/'
+
+    fs.readdir(directory, function(err, filenames) {
+        console.log(filenames)
+        filenames.forEach( function (file, index) {
+            console.log(file)
+            fs.readFile(directory+file, 'utf8', (err, data) => {
+                console.log(data)
+            });
+        });
+    });
 
 
 })();
