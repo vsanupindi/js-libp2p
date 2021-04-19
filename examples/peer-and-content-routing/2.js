@@ -61,5 +61,5 @@ const createNode = async () => {
 
   const providers = await all(node3.contentRouting.findProviders(cid, { timeout: 3000 }))
 
-  console.log('Found provider:', providers[0].id.toB58String())
+  console.log('Found provider:', providers[0])
 })();
