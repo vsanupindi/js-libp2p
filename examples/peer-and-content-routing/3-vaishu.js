@@ -44,54 +44,82 @@ const createNode = async () => {
         createNode()
     ])
 
-    node1.peerStore.addressBook.set(node2.peerId, node2.multiaddrs)
-    node2.peerStore.addressBook.set(node3.peerId, node3.multiaddrs)
+    const directory = 'stocks/'
+    var num_users
+
+    fs.readdir(directory, function(err, filenames) {
+        console.log(filenames.length)
+        // num_users is getting the number of users here
+        num_users = filenames.length
+        console.log(filenames)
+        filenames.forEach( function (file, index) {
+            var fromPath = directory+file
+            fs.stat(fromPath, function(error, stat) {
+                if (stat.isFile()) {
+                    console.log(fromPath, " is a file!")
+                    fs.readFile(directory+file, 'utf8', (err, data) => {
+                        //console.log(data)
+                    });
+                } else if (stat.isDirectory()) {
+                    console.log(fromPath, " is a directory!")
+                }
+            });
+        });
+    });
+
+    // why is this returning undefined??
+    await console.log("The num_users data type is ", typeof(num_users))
+    var i
+    var nodes = new Array(3)
+    for(i = 0; i < 3; i++) {
+        nodes[i] = await createNode()
+    }
+
+    nodes[0].peerStore.addressBook.set(nodes[1].peerId, nodes[1].multiaddrs)
+    nodes[1].peerStore.addressBook.set(nodes[2].peerId, nodes[2].multiaddrs)
 
     await Promise.all([
-        node1.dial(node2.peerId),
-        node2.dial(node3.peerId)
+        nodes[0].dial(nodes[1].peerId),
+        nodes[1].dial(nodes[2].peerId)
     ])
-
-    // Wait for onConnect handlers in the DHT
-    await delay(100)
-
-    //const cid = new CID('QmTp9VkYvnHyrqKQuFPiuZkiX9gPcqj6x5LJ1rmWuSySnL')
-    //await node1.contentRouting.provide(cid)
-
-    //console.log('Node %s is providing %s', node1.peerId.toB58String(), cid.toBaseEncodedString())
-
-    // wait for propagation
-    //await delay(300)
-
-    //const providers = await all(node3.contentRouting.findProviders(cid, { timeout: 3000 }))
-
-    //console.log('Found provider:', providers[0].id.toB58String())
 
     // vaishu's testing code
     const key = uint8ArrayFromString('APPL')
     const value = uint8ArrayFromString('Apple stock sucks right now')
 
-
-    //const key = new CID('QmTp9VkYvnHyrqKQuFPiuZkiX9gPcqj6x5LJ1rmWuSySnL')
-    await node2.contentRouting.put(key, value)
+    await nodes[0].contentRouting.put(key, value)
 
     await delay(300)
 
-    const return_val = await (node3.contentRouting.get(key, { timeout: 3000 }))
+    const return_val = await (nodes[2].contentRouting.get(key, { timeout: 3000 }))
     console.log('The returned value is: ', return_val)
     console.log('The returned value is: ', uint8ArrayToString(return_val))
 
-    const directory = 'stocks-Test/'
 
-    fs.readdir(directory, function(err, filenames) {
-        console.log(filenames)
-        filenames.forEach( function (file, index) {
-            console.log(file)
-            fs.readFile(directory+file, 'utf8', (err, data) => {
-                console.log(data)
-            });
-        });
-    });
+    // hardcoded implementation - ignore for now
+    //node1.peerStore.addressBook.set(node2.peerId, node2.multiaddrs)
+    //node2.peerStore.addressBook.set(node3.peerId, node3.multiaddrs)
+
+    /*await Promise.all([
+        node1.dial(node2.peerId),
+        node2.dial(node3.peerId)
+    ])*/
+
+    // Wait for onConnect handlers in the DHT
+    //await delay(100)
 
 
+    // vaishu's testing code
+    //const key = uint8ArrayFromString('APPL')
+    //const value = uint8ArrayFromString('Apple stock sucks right now')
+
+
+    //const key = new CID('QmTp9VkYvnHyrqKQuFPiuZkiX9gPcqj6x5LJ1rmWuSySnL')
+    //await node2.contentRouting.put(key, value)
+
+    //await delay(300)
+
+    //const return_val = await (node3.contentRouting.get(key, { timeout: 3000 }))
+    //console.log('The returned value is: ', return_val)
+    //console.log('The returned value is: ', uint8ArrayToString(return_val))
 })();
