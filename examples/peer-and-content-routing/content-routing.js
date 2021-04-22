@@ -20,6 +20,7 @@ const stringToArray = require('../utils.js').stringToArray
 
 const uint8ArrayFromString = require('uint8arrays/from-string')
 const uint8ArrayToString = require('uint8arrays/to-string')
+const fs = require('fs')
 
 const createNode = async () => {
         const node = await Libp2p.create({
@@ -67,11 +68,33 @@ const createNode = async () => {
 
     // main command loop
 
+    // reading in the host's opinions
+    function read_host_opinions() {
+        var host_nickname = process.argv.slice(2).join('').replace('-nick=', '')
+        const directory = 'stocks/stocks-'
+        fs.readdir(directory+host_nickname, function(err, filenames) {
+            filenames.forEach( function (file, index) {
+                var fromPath = directory+host_nickname+'/'
+                fs.readFile(fromPath+file, 'utf8', (err, data) => {
+                    var stock_ticker = file.replace('.json', '')
+                    var obj = JSON.parse(data)
+                    var comp_review = obj.Numeric + " - " + obj.Opinion
+                    var host_id = host_node.peerStore._peerId._idB58String
+                    host_node.contentRouting.put(uint8ArrayFromString(stock_ticker+'-'+host_id),
+                        uint8ArrayFromString(comp_review))
+                });
+            });
+        });
+    }
+
+    // end of reading in the host's opinions
+
     function get_user_cmd() {
       return new Promise(function(resolve, reject) {
           let rl = readline.createInterface(process.stdin, process.stdout)
 
           rl.setPrompt("[GET | PUT] [<stock ticker>] review: ")
+          //rl.setPrompt("GET <stock ticker>: ")
           rl.prompt();
 
           rl.on('line', async function(line) {
@@ -134,5 +157,7 @@ const createNode = async () => {
         })
     }
 
+    await read_host_opinions()
+    await delay(500)
     await get_user_cmd()
 })();
