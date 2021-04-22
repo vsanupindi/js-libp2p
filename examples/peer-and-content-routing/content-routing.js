@@ -65,15 +65,6 @@ const createNode = async () => {
     // Wait for onConnect handlers in the DHT
     await delay(500)
 
-//   const cid = new CID('QmTp9VkYvnHyrqKQuFPiuZkiX9gPcqj6x5LJ1rmWuSySnL')
-
-//   await host_node.contentRouting.put(Uint8Array.from([5]), Uint8Array.from([7,11,13,17]))
-//   await host_node.contentRouting.put(Uint8Array.from([5]), Uint8Array.from([7,11,13,23]))
-//   await host_node.contentRouting.put(Uint8Array.from([5]), Uint8Array.from([7,11,13,27]))
-//   await host_node.contentRouting.provide(cid)
-
-//   console.log(await host_node.contentRouting.getMany(Uint8Array.from([5]), 3))
-
     // main command loop
 
     function get_user_cmd() {
@@ -95,18 +86,24 @@ const createNode = async () => {
               if (args.len < 2) {
                   console.log("Invalid input")
                   rl.prompt()
+                  rl.prompt()
                 }
                 try {
-                  var return_val = await host_node.contentRouting.getMany(uint8ArrayFromString(args[1]), 5)
-                    //console.log(return_val)
-                    //console.log(return_val[0]['val'])
-                    if (Object.keys(return_val).length > 1) {
-                        console.log("There are many opinions on this!!")
-                    } else {
-                        console.log(uint8ArrayToString(return_val[0]['val']))
+                    for (let [peerIdString, peer] of host_node.peerStore.peers.entries()) {
+                        // peer { id, addresses, metadata, protocols }
+                        try {
+                            var return_val = await host_node.contentRouting.get(uint8ArrayFromString(args[1] + '-' + peerIdString))
+                            console.log(peerIdString + ": " + return_val)
+                        } catch (err) {
+                            continue
+                        }
                     }
-                } catch (err) {
-                  console.log(err.code)
+                    var host_id = host_node.peerStore._peerId._idB58String
+                    var return_val = await host_node.contentRouting.get(uint8ArrayFromString(args[1]+'-'+host_id))
+                    console.log("(Host) "+host_id+": "+uint8ArrayToString(return_val))
+
+                } catch(err) {
+                    //console.log("No stored opinions on ", args[1])
                 }
             }
 
@@ -118,10 +115,11 @@ const createNode = async () => {
                 try {
                     var temp_val = line.split(' ')
                     var opinion = temp_val.slice(2).join(' ')
-                    await host_node.contentRouting.put(uint8ArrayFromString(args[1]),
+                    var host_id = host_node.peerStore._peerId._idB58String
+
+                    await host_node.contentRouting.put(uint8ArrayFromString(args[1]+'-'+host_id),
                         uint8ArrayFromString(opinion))
                 } catch (err) {
-                    console.log("ERROR")
                     console.log(err.code)
                 }
             }
