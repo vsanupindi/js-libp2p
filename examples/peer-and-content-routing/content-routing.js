@@ -46,7 +46,6 @@ const createNode = async () => {
                 }
             }
         })
-
         return node
     }
 
